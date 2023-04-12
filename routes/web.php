@@ -11,3 +11,4 @@ Route::get('/', function () {
     return view('welcome');
 });
 Route::post('find', [MahasiswaController::class, 'find'])->name('find');
+?>
