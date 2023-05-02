@@ -6,6 +6,8 @@ use App\Models\Mahasiswa;
 use App\Models\kelas;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\DB;
 
 
 class MahasiswaController extends Controller
@@ -17,9 +19,15 @@ class MahasiswaController extends Controller
      */
     public function index()
     {
-        $mahasiswas = Mahasiswa::paginate(5); // Mengambil semua isi tabel
-        $posts = Mahasiswa::orderBy('NIM', 'desc')->paginate(6);
-        return view('mahasiswas.index', compact('mahasiswas'))->with('i', (request()->input('page', 1) - 1) * 5);
+        // $mahasiswas = Mahasiswa::paginate(5); // Mengambil semua isi tabel
+        // $posts = Mahasiswa::orderBy('NIM', 'desc')->paginate(6);
+        // return view('mahasiswas.index', compact('mahasiswas'))->with('i', (request()->input('page', 1) - 1) * 5);
+                
+        //yang semula Mahasiswa::all, diubah menjadi with() yang menyatakan relasi
+
+        $mahasiswas = Mahasiswa::with('kelas');
+        $paginate = Mahasiswa::orderBy('Nim', 'asc')->paginate(5);
+        return view('mahasiswas.index', ['mahasiswas' => $mahasiswas, 'paginate' => $paginate]);
     }
 
     /**
@@ -83,6 +91,18 @@ class MahasiswaController extends Controller
         // menampilkan detail data dengan menemukan/berdasarkan Nim Mahasiswa
         $Mahasiswa = Mahasiswa::find($nim);
         return view('mahasiswas.detail', compact('Mahasiswa'));
+    }
+
+    public function detailnilai($nim)
+    {
+        // menampilkan detail data dengan menemukan/berdasarkan Nim Mahasiswa
+        $Mahasiswa = Mahasiswa::with('matakulias')->where('Nim', $nim)->first();
+        $nilai = DB::table('mahasiswa_matakuliah')
+            ->join('matakuliah', 'matakuliah.id', '=', 'mahasiswa_matakuliah.matakuliah_id')
+            ->where('mahasiswa_matakuliah.Nim', $nim)
+            ->select('nilai')
+            ->get();
+        return view('mahasiswas.nilai', ['Mahasiswa' => $Mahasiswa,'nilai' => $nilai]);
     }
 
     /**

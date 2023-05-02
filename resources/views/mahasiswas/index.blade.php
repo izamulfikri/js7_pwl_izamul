@@ -37,7 +37,7 @@
         <th>Tanggal_lahir</th>
         <th width="280px">Action</th>
     </tr>
-    @foreach ($mahasiswas as $Mahasiswa)
+    @foreach ($paginate as $Mahasiswa)
     <tr>
 
         <td>{{ $Mahasiswa->Nim }}</td>
@@ -49,9 +49,9 @@
         <td>{{ $Mahasiswa->Tanggal_lahir }}</td>
         <td>
             <form action="{{ route('mahasiswas.destroy',$Mahasiswa->Nim) }}" method="POST">
-
                 <a class="btn btn-info" href="{{ route('mahasiswas.show',$Mahasiswa->Nim) }}">Show</a>
                 <a class="btn btn-primary" href="{{ route('mahasiswas.edit',$Mahasiswa->Nim) }}">Edit</a>
+                <a class="btn btn-warning" href="{{ route('detailnilai',$Mahasiswa->Nim) }}">Nilai</a>
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn btn-danger">Delete</button>
@@ -61,6 +61,6 @@
     @endforeach
 </table>
 <div class="col-md-12">
-    {{ $mahasiswas->links() }}
+    {{ $paginate->links() }}
 </div>
 @endsection

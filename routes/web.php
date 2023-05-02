@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 
 Route::resource('mahasiswas',MahasiswaController::class);
+Route::get('/mahasiswas/detailnilai/{nim}',[MahasiswaController::class,"detailnilai"])->name('detailnilai');
 
 Route::get('/', function () {
     return view('welcome');
