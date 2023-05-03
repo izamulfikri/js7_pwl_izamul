@@ -21,13 +21,13 @@
         </thead>
 
         <tbody>
-            @foreach ($Mahasiswa->matakuliah as $matkul)
+            @foreach ($Mahasiswa->matakulias as $matkul)
             <tr>
                 <td>{{$matkul->nama_matkul}}</td>
                 <td>{{$matkul->sks}}</td>
                 <td>{{$matkul->semester}}</td>
                 @php
-                $n = $nilai->where('Nim', $mhs->Nim)->first();
+                $n = $nilai->where('Nim', $matkul->Nim)->first();
                 @endphp
                 <td>
                     @if($n)
