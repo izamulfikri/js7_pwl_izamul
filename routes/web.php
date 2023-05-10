@@ -12,4 +12,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 Route::post('find', [MahasiswaController::class, 'find'])->name('find');
+
+Route::get('/article/cetak_pdf', [ArticleController::class, 'cetak_pdf']);
+Route::get('/mahasiswas/{nim}/exportPDF', [MahasiswaController::class, 'exportPDF'])->name('mahasiswas.exportPDF');
 ?>

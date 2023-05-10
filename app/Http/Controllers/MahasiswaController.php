@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
+use PDF;
 
 
 class MahasiswaController extends Controller
@@ -22,7 +23,7 @@ class MahasiswaController extends Controller
         // $mahasiswas = Mahasiswa::paginate(5); // Mengambil semua isi tabel
         // $posts = Mahasiswa::orderBy('NIM', 'desc')->paginate(6);
         // return view('mahasiswas.index', compact('mahasiswas'))->with('i', (request()->input('page', 1) - 1) * 5);
-                
+
         //yang semula Mahasiswa::all, diubah menjadi with() yang menyatakan relasi
 
         $mahasiswas = Mahasiswa::with('kelas');
@@ -53,6 +54,7 @@ class MahasiswaController extends Controller
         $request->validate([
             'Nim' => 'required',
             'Nama' => 'required',
+            'foto' => 'required|image|max:2048',
             'kelas' => 'required',
             'Jurusan' => 'required',
             'No_Handphone' => 'required',
@@ -62,9 +64,13 @@ class MahasiswaController extends Controller
         // // fungsi eloquent untuk menambah data
         // Mahasiswa::create($request->all());
 
+        $imageName = time() . '.' . $request->foto->extension();
+        $request->foto->move(public_path('storage'), $imageName);
+
         $mahasiswas = new Mahasiswa;
         $mahasiswas->Nim = $request->get('Nim');
         $mahasiswas->Nama = $request->get('Nama');
+        $mahasiswas->foto = $imageName;
         $mahasiswas->Tanggal_lahir = $request->get('Tanggal_lahir');
         $mahasiswas->Jurusan = $request->get('Jurusan');
         $mahasiswas->Email = $request->get('Email');
@@ -102,7 +108,7 @@ class MahasiswaController extends Controller
             ->where('mahasiswa_matakuliah.Nim', $nim)
             ->select('nilai')
             ->get();
-        return view('mahasiswas.nilai', ['Mahasiswa' => $Mahasiswa,'nilai' => $nilai]);
+        return view('mahasiswas.nilai', ['Mahasiswa' => $Mahasiswa, 'nilai' => $nilai]);
     }
 
     /**
@@ -132,6 +138,7 @@ class MahasiswaController extends Controller
         $request->validate([
             'Nim' => 'required',
             'Nama' => 'required',
+            'foto' => 'required|image|max:2048',
             'kelas' => 'required',
             'Jurusan' => 'required',
             'No_Handphone' => 'required',
@@ -149,12 +156,29 @@ class MahasiswaController extends Controller
         $mahasiswas->Jurusan = $request->get('Jurusan');
         $mahasiswas->Email = $request->get('Email');
         $mahasiswas->No_Handphone = $request->get('No_Handphone');
+        $mahasiswas->save();
+
+        if ($request->file('foto')) {
+            // hapus foto lama jika ada foto baru yang diupload
+            if ($mahasiswas->foto && file_exists(storage_path('app/public/' . $mahasiswas->foto))) {
+                \Storage::delete('public/' . $mahasiswas->foto);
+            }
+            // simpan foto baru ke direktori penyimpanan
+            $file = $request->file('foto');
+            $nama_file = $file->getClientOriginalName();
+            $file->storeAs('public/foto', $nama_file);
+            // simpan nama file foto ke dalam kolom 'foto' pada tabel 'mahasiswas'
+            $mahasiswas->foto = $nama_file;
+        }
+        $image_name = $request->file('foto')->store('images', 'public');
+        $mahasiswas->foto = $image_name;
 
         $kelas = new Kelas;
         $kelas->id = $request->get('kelas');
 
         $mahasiswas->kelas()->associate($kelas);
         $mahasiswas->save();
+
 
         // jika data berhasil diupdate, akan kembali ke ahalaman utama
         return redirect()->route('mahasiswas.index')->with('success', 'Mahasiswa Berhasil Diupdate');
@@ -178,5 +202,17 @@ class MahasiswaController extends Controller
         $findMhs = $request->findMhs;
         $mahasiswas = Mahasiswa::where('nama', 'like', '%' . $findMhs . '%')->paginate(5);
         return view('mahasiswas.index', compact('mahasiswas'));
+    }
+
+    public function exportPDF($nim)
+    {
+        $mahasiswas = Mahasiswa::with('matakulias')->where('Nim', $nim)->first();
+        $nilai = DB::table('mahasiswa_matakuliah')
+            ->join('matakuliah', 'matakuliah.id', '=', 'mahasiswa_matakuliah.matakuliah_id')
+            ->where('mahasiswa_matakuliah.Nim', $nim)
+            ->select('nilai')
+            ->get();
+        $pdf = PDF::loadView('mahasiswas.nilai_pdf', ['mahasiswas' => $mahasiswas, 'nilai' => $nilai]);
+        return $pdf->download('KHS-' . $mahasiswas->Nama . '.pdf');
     }
 }

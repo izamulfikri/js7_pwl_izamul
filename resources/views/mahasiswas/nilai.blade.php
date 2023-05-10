@@ -40,5 +40,6 @@
             @endforeach
         </tbody>
     </table>
+    <a class="btn btn-primary" href="{{ route('mahasiswas.exportPDF',$Mahasiswa->Nim)}}" style="margin-left:14cm" target="_blank">Cetak PDF</a>
 </div>
 @endsection
